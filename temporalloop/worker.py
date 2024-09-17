@@ -1,13 +1,14 @@
 #!/usr/bin/env python3
 import asyncio
+from datetime import timedelta
 import dataclasses
 import logging
 import signal
 import threading
 from concurrent.futures import ThreadPoolExecutor
+from time import sleep
 from types import FrameType
 from typing import TYPE_CHECKING, Any, Callable, TypeVar, cast
-from temporalio.runtime import Runtime, TelemetryConfig, PrometheusConfig
 from temporalio import workflow
 from temporalio.client import Client
 from temporalio.worker import Worker
@@ -62,22 +63,22 @@ class WorkerFactory:
     def __init__(self, config: "Config"):
         self.config = config
         self.new_runtime = None
-        self._client = None
 
-    async def client(self):
-        if not self._client:
+
+    async def client(self, config):
             # if self.config.metric_bind_address:
             #     self.new_runtime = Runtime(telemetry=TelemetryConfig(metrics=PrometheusConfig(bind_address=self.config.metric_bind_address)))
 
-            kwargs: dict[str, Any] = {"namespace": self.config.namespace}
-            if self.new_runtime is not None:
-                kwargs["runtime"] = self.new_runtime
+        kwargs: dict[str, Any] = {"namespace": config.namespace}
+        if self.new_runtime is not None:
+            kwargs["runtime"] = self.new_runtime
 
-            if self.config.converter is not None:
-                kwargs["data_converter"] = self.config.converter
+        if config.converter is not None:
+            kwargs["data_converter"] = config.converter
 
-            self._client = await Client.connect(self.config.host, **kwargs)
-        return self._client
+        return await Client.connect(config.host, **kwargs)
+
+
 
     async def execute_preinit(self, fn: list[Callable[..., Any]]) -> None:
         for x in fn:
@@ -97,7 +98,7 @@ class WorkerFactory:
             config.max_concurrent_activities,
             config.metric_bind_address
         )
-        client = await self.client()
+        client = await self.client(config)
         # Run a worker for the workflow
         return Worker(
             client,
@@ -112,6 +113,7 @@ class WorkerFactory:
                 max(config.max_concurrent_activities + 1, 10)
             ),
             workflow_runner=new_sandbox_runner(),
+            graceful_shutdown_timeout=timedelta(seconds=10),
         )
 
 
@@ -123,15 +125,15 @@ class Looper:
 
     async def stop(self) -> None:
         logger.info("Worker shutdown requested")
-        group = [x.shutdown() for x in self.workers]
+        group = [asyncio.wait_for(x.shutdown(), 3)  for x in self.workers]
         await asyncio.gather(*group)
-        logger.info("Worker shutdown complete")
+        return None
 
     async def run(self):
         self.install_signal_handlers()
         if not self.config.loaded:
             self.config.load()
-        logger.info("Config loaded")
+        logger.info("Config loaded %s", self.config.workers[0].converter)
         logger.info("Connecting %s workers", len(self.config.workers))
         self.workers = await self.prepare_workers()
         logger.info("Starting %s workers", len(self.config.workers))
@@ -160,6 +162,6 @@ class Looper:
         _ = frame
         if sig in (signal.SIGTERM, signal.SIGINT):
             logger.warning("Received signal %s: stopping the workers", sig)
-            asyncio.create_task(self.stop())
+            raise SystemExit(0)
         else:
             logger.info("Received Signal %s: ignored", sig)
