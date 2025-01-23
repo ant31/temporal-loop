@@ -72,6 +72,10 @@ def merge_loggers(logging_config: dict[str, Any]) -> dict[str, Any]:
     return logging_config
 
 
+class BaseConfig(BaseModel):
+    model_config = ConfigDict(extra="allow")
+
+
 # pylint: disable=too-many-arguments,too-many-instance-attributes,dangerous-default-value,invalid-name,too-many-locals
 class WorkerConfig:
     def __init__(

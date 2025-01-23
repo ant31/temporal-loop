@@ -1,5 +1,5 @@
-from typing import Any, Dict, Optional, Union
-
+from typing import Any, Dict, Literal, Optional, Union
+from datetime import timedelta
 import yaml
 from pydantic import Field
 from pydantic_settings import BaseSettings, SettingsConfigDict
@@ -19,6 +19,31 @@ class LoggingConfigSchema(BaseConfig):
     level: str = Field(default="INFO")
 
 
+
+class TemporalInterval(BaseConfig):
+    every: str = Field(default="86400s")
+    offset: str | None = Field(default=None)
+
+    def every_timedelta(self) -> timedelta:
+        return time_interval(self.every)
+
+    def offset_timedelta(self) -> timedelta | None:
+        if self.offset is None:
+            return None
+        return time_interval(self.offset)
+
+
+class TemporalScheduleSchema(BaseConfig):
+    workflow_id: str = Field(...)
+    workflow: str = Field(...)
+    input_schema: str = Field(default="")
+    task_queue: str = Field(default="connyex-queue")
+    interval: TemporalInterval = Field(default_factory=TemporalInterval)
+    comment: str = Field(default="")
+    payload: dict[str, Any] = Field(default_factory=dict)
+    state: Literal["created", "paused", "deleted"] = Field(default="created")
+
+
 class WorkerConfigSchema(BaseConfig):
     interceptors: Optional[list[str]] = Field(default=None)
     activities: Optional[list[str]] = Field(default=[])
@@ -33,6 +58,7 @@ class WorkerConfigSchema(BaseConfig):
     debug_mode: bool = Field(default=False)
     disable_eager_activity_execution: bool = Field(default=True) # pylint: disable=invalid-name
     metric_bind_address: str = Field(default="0.0.0.0:9000")
+
 
 class TemporalConfigSchema(BaseConfig):
     host: str = Field(default="localhost:7233")
