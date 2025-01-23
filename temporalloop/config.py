@@ -3,7 +3,8 @@ import json
 import logging
 import logging.config
 import sys
-from typing import Any, Callable, Optional, Sequence, Type, Union, cast
+from collections.abc import Callable, Sequence
+from typing import Any, Optional, cast
 
 import yaml
 from temporalio.converter import DataConverter
@@ -57,17 +58,11 @@ def merge_loggers(logging_config: dict[str, Any]) -> dict[str, Any]:
         logging_config["loggers"] = LOGGING_CONFIG["loggers"]
     else:
         if "temporalio" not in logging_config["loggers"]:
-            logging_config["loggers"]["temporalio"] = LOGGING_CONFIG["loggers"][
-                "temporalio"
-            ]
+            logging_config["loggers"]["temporalio"] = LOGGING_CONFIG["loggers"]["temporalio"]
         if "temporalloop" not in logging_config["loggers"]:
-            logging_config["loggers"]["temporalloop"] = LOGGING_CONFIG["loggers"][
-                "temporalloop"
-            ]
+            logging_config["loggers"]["temporalloop"] = LOGGING_CONFIG["loggers"]["temporalloop"]
         if "temporalloop.error" not in logging_config["loggers"]:
-            logging_config["loggers"]["temporalloop.error"] = LOGGING_CONFIG["loggers"][
-                "temporalloop.error"
-            ]
+            logging_config["loggers"]["temporalloop.error"] = LOGGING_CONFIG["loggers"]["temporalloop.error"]
 
     return logging_config
 
@@ -77,22 +72,22 @@ class WorkerConfig:
     def __init__(
         self,
         *,
-        name: str,
-        factory: Union[Type[WorkerFactoryType], str] = "",
+        name: str = "worker",
+        factory: type[WorkerFactoryType] | str = "",
         queue: str = "default-queue",
         host: str = "",
         namespace: str = "",
-        activities: Sequence[Union[Callable[..., Any], str]] = [],
-        workflows: Sequence[Union[Type[Any], str]] = [],
-        interceptors: Sequence[Union[Type[Interceptor], str]] = [],
-        converter: Union[DataConverter, str, None] = None,
-        pre_init: Sequence[Union[Callable[..., Any], str]] = [],
+        activities: Sequence[Callable[..., Any] | str] = [],
+        workflows: Sequence[type[Any] | str] = [],
+        interceptors: Sequence[type[Interceptor] | str] = [],
+        converter: DataConverter | str | None = None,
+        pre_init: Sequence[Callable[..., Any] | str] = [],
         behavior: str = "merge",
         max_concurrent_workflow_tasks: int = 0,
         max_concurrent_activities: int = 0,
-        metric_bind_address: str  = "",
+        metric_bind_address: str = "",
         debug_mode: bool = False,
-        disable_eager_activity_execution: bool = True
+        disable_eager_activity_execution: bool = True,
     ) -> None:
         self.name = name
         self.host: str = host
@@ -106,10 +101,10 @@ class WorkerConfig:
         self._pre_init = pre_init
 
         self.pre_init: list[Callable[..., Any]] = []
-        self.converter: Optional[DataConverter] = None
+        self.converter: DataConverter | None = None
         self.queue = queue
-        self.workflows: Sequence[Type[Any]] = []
-        self.interceptors: Sequence[Type[Interceptor]] = []
+        self.workflows: Sequence[type[Any]] = []
+        self.interceptors: Sequence[type[Interceptor]] = []
         self.activities: Sequence[Callable[..., Any]] = []
         self.loaded = False
         self.behavior = behavior
@@ -138,7 +133,6 @@ class WorkerConfig:
             self.max_concurrent_activities = config.max_concurrent_activities
         if not self.metric_bind_address:
             self.metric_bind_address = config.metric_bind_address
-
 
     def load(self, global_config: Optional["Config"] = None) -> None:
         assert not self.loaded
@@ -169,21 +163,23 @@ class WorkerConfig:
 class Config:
     def __init__(
         self,
+        *,
         host: str = "localhost:7233",
         namespace: str = "default",
-        factory: Union[Type[WorkerFactoryType], str] = WorkerFactory,
-        log_config: Optional[Union[dict[str, Any], str]] = LOGGING_CONFIG,
-        log_level: Optional[Union[str, int]] = None,
-        interceptors: Sequence[Union[Type[Interceptor], str]] = [],
-        converter: Union[DataConverter, str, None] = None,
-        use_colors: Optional[bool] = None,
-        workers: Sequence[Union[WorkerConfig, dict[str, Any]]] = [],
+        factory: type[WorkerFactoryType] | str = WorkerFactory,
+        log_config: dict[str, Any] | str | None = LOGGING_CONFIG,
+        log_level: str | int | None = None,
+        interceptors: Sequence[type[Interceptor] | str] = [],
+        converter: DataConverter | str | None = None,
+        use_colors: bool | None = None,
+        workers: Sequence[WorkerConfig | dict[str, Any]] = [],
         max_concurrent_activities: int = 100,
         max_concurrent_workflow_tasks: int = 100,
         metric_bind_address: str = "0.0.0.0:9000",
-        limit_concurrency: Optional[int] = None,
-        pre_init: list[str] = [],
+        limit_concurrency: int | None = None,
+        pre_init: list[str] | None = None,
         config_logging: bool = True,
+        schedules: dict[str, Any] | None = None,
     ):
         self.host = host
         self.namespace: str = namespace
@@ -194,6 +190,11 @@ class Config:
         self.limit_concurrency = limit_concurrency
         self.interceptors = interceptors
         self._workers = workers
+        if schedules is None:
+            schedules = {}
+        self.schedules = schedules
+        if pre_init is None:
+            pre_init = []
         self.pre_init = pre_init
         self.workers: list[WorkerConfig] = []
         self.converter = converter
@@ -208,9 +209,7 @@ class Config:
         if self.log_config is not None:
             if isinstance(self.log_config, dict):
                 if self.use_colors in (True, False):
-                    self.log_config["formatters"]["default"][
-                        "use_colors"
-                    ] = self.use_colors
+                    self.log_config["formatters"]["default"]["use_colors"] = self.use_colors
                 logging.config.dictConfig(self.log_config)
             elif self.log_config.endswith(".json"):
                 with open(self.log_config, encoding="utf-8") as file:
@@ -223,9 +222,7 @@ class Config:
             else:
                 # See the note about fileConfig() here:
                 # https://docs.python.org/3/library/logging.config.html#configuration-file-format
-                logging.config.fileConfig(
-                    self.log_config, disable_existing_loggers=False
-                )
+                logging.config.fileConfig(self.log_config, disable_existing_loggers=False)
 
         if self.log_level is not None:
             if isinstance(self.log_level, str):
@@ -241,9 +238,12 @@ class Config:
     def load(self) -> None:
         assert not self.loaded
         for worker in self._workers:
-            if isinstance(worker, dict):
-                worker = WorkerConfig(**worker)
-            if isinstance(worker, WorkerConfig):
-                worker.load(self)
-            self.workers.append(worker)
+            w = worker
+            if isinstance(w, dict):
+                w = WorkerConfig(**w)
+            if isinstance(w, WorkerConfig):
+                w.load(self)
+            else:
+                raise ValueError("Invalid worker configuration")
+            self.workers.append(w)
         self.loaded = True

@@ -2,7 +2,8 @@
   "site_package_search_strategy": "pep561",
   "strict": false,
   "search_path": [
-    { "site-package": "temporalio" }
+    { "site-package": "temporalio" },
+    { "site-package": "ant31box" }
   ],
 
   "source_directories": [

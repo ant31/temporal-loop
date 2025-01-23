@@ -1,14 +1,15 @@
 #!/usr/bin/env python3
 import asyncio
-from datetime import timedelta
 import dataclasses
 import logging
 import signal
 import threading
+from collections.abc import Callable
 from concurrent.futures import ThreadPoolExecutor
-from time import sleep
+from datetime import timedelta
 from types import FrameType
-from typing import TYPE_CHECKING, Any, Callable, TypeVar, cast
+from typing import TYPE_CHECKING, Any, TypeVar, cast
+
 from temporalio import workflow
 from temporalio.client import Client
 from temporalio.worker import Worker
@@ -22,9 +23,7 @@ from temporalloop.importer import import_from_string
 if TYPE_CHECKING:
     from temporalloop.config import Config, WorkerConfig
 
-WorkerFactoryType = TypeVar(  # pylint: disable=invalid-name
-    "WorkerFactoryType", bound="WorkerFactory"
-)
+WorkerFactoryType = TypeVar("WorkerFactoryType", bound="WorkerFactory")  # pylint: disable=invalid-name
 
 logger = logging.getLogger("temporalloop.info")
 
@@ -44,9 +43,7 @@ with workflow.unsafe.imports_passed_through():
 def new_sandbox_runner() -> SandboxedWorkflowRunner:
     # TODO(cretz): Use with_child_unrestricted when https://github.com/temporalio/sdk-python/issues/254
     # is fixed and released
-    invalid_module_member_children = dict(
-        SandboxRestrictions.invalid_module_members_default.children
-    )
+    invalid_module_member_children = dict(SandboxRestrictions.invalid_module_members_default.children)
     del invalid_module_member_children["datetime"]
     return SandboxedWorkflowRunner(
         restrictions=dataclasses.replace(
@@ -64,11 +61,7 @@ class WorkerFactory:
         self.config = config
         self.new_runtime = None
 
-
     async def client(self, config):
-            # if self.config.metric_bind_address:
-            #     self.new_runtime = Runtime(telemetry=TelemetryConfig(metrics=PrometheusConfig(bind_address=self.config.metric_bind_address)))
-
         kwargs: dict[str, Any] = {"namespace": config.namespace}
         if self.new_runtime is not None:
             kwargs["runtime"] = self.new_runtime
@@ -77,8 +70,6 @@ class WorkerFactory:
             kwargs["data_converter"] = config.converter
 
         return await Client.connect(config.host, **kwargs)
-
-
 
     async def execute_preinit(self, fn: list[Callable[..., Any]]) -> None:
         for x in fn:
@@ -89,14 +80,17 @@ class WorkerFactory:
         config = worker_config
         await self.execute_preinit(worker_config.pre_init)
         logger.info(
-            "[Start worker][%s][queue:%s][workflows:%s][activities:%s][max_concurrent_workflow_tasks:%s][max_concurrent_activities:%s][metric_bind_address:%s]",
+            (
+                "[Start worker][%s][queue:%s][workflows:%s][activities:%s]"
+                "[max_concurrent_workflow_tasks:%s][max_concurrent_activities:%s][metric_bind_address:%s]"
+            ),
             config.name,
             config.queue,
             config.workflows,
             config.activities,
             config.max_concurrent_workflow_tasks,
             config.max_concurrent_activities,
-            config.metric_bind_address
+            config.metric_bind_address,
         )
         client = await self.client(config)
         # Run a worker for the workflow
@@ -109,9 +103,7 @@ class WorkerFactory:
             max_concurrent_workflow_tasks=config.max_concurrent_workflow_tasks,
             max_concurrent_activities=config.max_concurrent_activities,
             interceptors=[x() for x in config.interceptors],
-            activity_executor=ThreadPoolExecutor(
-                max(config.max_concurrent_activities + 1, 10)
-            ),
+            activity_executor=ThreadPoolExecutor(max(config.max_concurrent_activities + 1, 10)),
             workflow_runner=new_sandbox_runner(),
             graceful_shutdown_timeout=timedelta(seconds=10),
         )
@@ -125,9 +117,8 @@ class Looper:
 
     async def stop(self) -> None:
         logger.info("Worker shutdown requested")
-        group = [asyncio.wait_for(x.shutdown(), 3)  for x in self.workers]
+        group = [asyncio.wait_for(x.shutdown(), 3) for x in self.workers]
         await asyncio.gather(*group)
-        return None
 
     async def run(self):
         self.install_signal_handlers()
@@ -153,9 +144,7 @@ class Looper:
             # Signals can only be listened to from the main thread.
             return
         for sig in HANDLED_SIGNALS:
-            asyncio.get_running_loop().add_signal_handler(
-                sig, self.handle_exit, sig, None
-            )
+            asyncio.get_running_loop().add_signal_handler(sig, self.handle_exit, sig, None)
 
     def handle_exit(self, sig: int, frame: FrameType | None) -> None:
         """Handle exit signals by setting the interrupt event."""
@@ -163,5 +152,4 @@ class Looper:
         if sig in (signal.SIGTERM, signal.SIGINT):
             logger.warning("Received signal %s: stopping the workers", sig)
             raise SystemExit(0)
-        else:
-            logger.info("Received Signal %s: ignored", sig)
+        logger.info("Received Signal %s: ignored", sig)
