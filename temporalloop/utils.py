@@ -1,8 +1,9 @@
 import asyncio
 import logging
 import re
-from typing import Any
 from datetime import timedelta
+from typing import Any
+
 import temporalio.client
 from ant31box.importer import import_from_string
 from temporalio.client import WorkflowHandle
@@ -11,6 +12,7 @@ from temporalio.service import RPCError, RPCStatusCode
 logger = logging.getLogger(__name__)
 
 TIMEINTERVAL_REGEX = re.compile(r"((?P<hours>\d+?)h)?((?P<minutes>\d+?)m)?((?P<seconds>\d+?)s)?")
+
 
 def time_interval(time_str: str) -> timedelta:
     parts = TIMEINTERVAL_REGEX.match(time_str)

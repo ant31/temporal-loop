@@ -59,7 +59,10 @@ pylint-quick:
 pylint:
 	poetry run pylint --rcfile=".pylintrc" $(package)
 
-check: black-test poetry-check pylint pyre-check
+check: format-test poetry-check ruff pylint pyre-check poetry-check
+
+poetry-check:
+	poetry check --lock
 
 pyre:
 	poetry run pyre
@@ -73,8 +76,17 @@ black:
 black-test:
 	poetry run black -t py310 tests $(package) --check
 
-poetry-check:
-	poetry lock --check
+format:
+	poetry run ruff format $(package)
+
+format-test:
+	poetry run ruff format $(package) --check
+
+fix: format isort
+	poetry run ruff check --fix
+
+ruff:
+	poetry run ruff check
 
 publish: clean
 	poetry build

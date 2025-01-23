@@ -15,9 +15,10 @@ from temporalio.client import (
     ScheduleUpdate,
 )
 from temporalio.service import RPCError, RPCStatusCode
-from temporalloop.importer import ImportFromStringError, import_from_string
 
-from connyex.config import TemporalScheduleSchema, config
+from temporalloop.config import Config
+from temporalloop.config_loader import TemporalScheduleSchema
+from temporalloop.importer import ImportFromStringError, import_from_string
 
 logger = logging.getLogger(__name__)
 
@@ -30,9 +31,11 @@ class ScheduleDefinition:
 
 
 class TemporalScheduler:
-    def __init__(self, client, schedules_entries: dict[str, TemporalScheduleSchema]) -> None:
+    def __init__(
+        self, client, schedules_entries: dict[str, TemporalScheduleSchema], config: Config | None = None
+    ) -> None:
         self.client = client
-        self.config = config()
+        self.config = config
         self.schedules: dict[str, ScheduleDefinition] = {}
         self.prep_schedules(schedules_entries)
 
