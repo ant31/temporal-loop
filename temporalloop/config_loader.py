@@ -57,7 +57,7 @@ class WorkerConfigSchema(BaseConfig):
     debug_mode: bool = Field(default=False)
     disable_eager_activity_execution: bool = Field(default=True)  # pylint: disable=invalid-name
     metric_bind_address: str = Field(default="0.0.0.0:9000")
-    enable_metric: bool = Field(default=False)
+    enable_metrics: bool = Field(default=False)
 
 
 class TemporalConfigSchema(BaseConfig):
@@ -72,7 +72,7 @@ class TemporalConfigSchema(BaseConfig):
     max_concurrent_workflow_tasks: int = Field(default=100)
     disable_eager_activity_execution: bool = Field(default=True)  # pylint: disable=invalid-name
     metric_bind_address: str = Field(default="0.0.0.0:9000")
-    enable_metric: bool = Field(default=False)
+    enable_metrics: bool = Field(default=False)
 
 
 class ConfigSchema(BaseConfig):
