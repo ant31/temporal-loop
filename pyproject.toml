@@ -10,7 +10,7 @@ tempoloop = 'temporalloop.main:main'
 
 [tool.poetry.dependencies]
 python = ">=3.11,<4"
-temporalio = "^1.1"
+temporalio = {extras = ["opentelemetry"], version = "*"}
 asyncio = "^3.4.3"
 pydantic = "^2.1"
 sentry-sdk = "^1"

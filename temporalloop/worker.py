@@ -12,6 +12,7 @@ from typing import TYPE_CHECKING, Any, TypeVar, cast
 
 from temporalio import workflow
 from temporalio.client import Client
+from temporalio.runtime import PrometheusConfig, Runtime, TelemetryConfig
 from temporalio.worker import Worker
 from temporalio.worker.workflow_sandbox import (
     SandboxedWorkflowRunner,
@@ -62,6 +63,11 @@ class WorkerFactory:
         self.new_runtime = None
 
     async def client(self, config):
+        if self.config.metric_bind_address and self.config.enable_metrics:
+            self.new_runtime = Runtime(
+                telemetry=TelemetryConfig(metrics=PrometheusConfig(bind_address=self.config.metric_bind_address))
+            )
+
         kwargs: dict[str, Any] = {"namespace": config.namespace}
         if self.new_runtime is not None:
             kwargs["runtime"] = self.new_runtime
@@ -81,8 +87,9 @@ class WorkerFactory:
         await self.execute_preinit(worker_config.pre_init)
         logger.info(
             (
-                "[Start worker][%s][queue:%s][workflows:%s][activities:%s]"
-                "[max_concurrent_workflow_tasks:%s][max_concurrent_activities:%s][metric_bind_address:%s]"
+                "[Start worker][%s][queue:%s][workflows:%s]"
+                "[activities:%s][max_concurrent_workflow_tasks:%s]"
+                "[max_concurrent_activities:%s][metric_bind_address:%s]"
             ),
             config.name,
             config.queue,

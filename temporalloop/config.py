@@ -86,6 +86,7 @@ class WorkerConfig:
         max_concurrent_workflow_tasks: int = 0,
         max_concurrent_activities: int = 0,
         metric_bind_address: str = "",
+        enable_metrics: bool = False,
         debug_mode: bool = False,
         disable_eager_activity_execution: bool = True,
     ) -> None:
@@ -113,6 +114,7 @@ class WorkerConfig:
         self.debug_mode = debug_mode
         self.disable_eager_activity_execution = disable_eager_activity_execution
         self.metric_bind_address = metric_bind_address
+        self.enable_metrics = enable_metrics
 
     def _merge(self, config: "Config") -> None:
         if not self.host:
@@ -133,6 +135,8 @@ class WorkerConfig:
             self.max_concurrent_activities = config.max_concurrent_activities
         if not self.metric_bind_address:
             self.metric_bind_address = config.metric_bind_address
+        if not self.enable_metrics:
+            self.enable_metrics = config.enable_metrics
 
     def load(self, global_config: Optional["Config"] = None) -> None:
         assert not self.loaded
@@ -178,6 +182,7 @@ class Config:
         metric_bind_address: str = "0.0.0.0:9000",
         limit_concurrency: int | None = None,
         pre_init: list[str] | None = None,
+        enable_metrics: bool = False,
         config_logging: bool = True,
         schedules: dict[str, Any] | None = None,
     ):
@@ -201,6 +206,7 @@ class Config:
         self.max_concurrent_activities = max_concurrent_activities
         self.max_concurrent_workflow_tasks = max_concurrent_workflow_tasks
         self.loaded = False
+        self.enable_metrics = enable_metrics
         self.metric_bind_address = metric_bind_address
         if config_logging:
             self.configure_logging()
