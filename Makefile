@@ -41,71 +41,80 @@ clean-test:
 	rm -fr htmlcov/
 
 test:
-	poetry run py.test --cov=$(package) --cov-report=html --cov-report=term-missing  --verbose tests
+	uv run py.test --cov=$(package) --cov-report=html --cov-report=term-missing  --verbose tests
 
 
 coverage:
-	poetry run coverage run --source $(package) setup.py test
-	poetry run coverage report -m
-	poetry run coverage html
+	uv run coverage run --source $(package) setup.py test
+	uv run coverage report -m
+	uv run coverage html
 	$(BROWSER) htmlcov/index.html
 
 install: clean
-	poetry install
+	uv install
 
 pylint-quick:
-	poetry run pylint --rcfile=.pylintrc $(package)  -E -r y
+	uv run pylint --rcfile=.pylintrc $(package)  -E -r y
 
 pylint:
-	poetry run pylint --rcfile=".pylintrc" $(package)
+	uv run pylint --rcfile=".pylintrc" $(package)
 
-check: format-test poetry-check ruff pylint pyre-check poetry-check
+check: format-test uv-check ruff pylint pyre-check uv-check
 
-poetry-check:
-	poetry check --lock
 
 pyre:
-	poetry run pyre
+	uv run pyre
 
 pyre-check:
-	poetry run pyre --noninteractive check 2>/dev/null
+	uv run pyre --noninteractive check 2>/dev/null
 
 black:
-	poetry run black -t py310 tests $(package)
+	uv run black -t py310 tests $(package)
 
 black-test:
-	poetry run black -t py310 tests $(package) --check
+	uv run black -t py310 tests $(package) --check
 
 format:
-	poetry run ruff format $(package)
+	uv run ruff format $(package)
 
 format-test:
-	poetry run ruff format $(package) --check
+	uv run ruff format $(package) --check
 
 fix: format isort
-	poetry run ruff check --fix
+	uv run ruff check --fix
 
 ruff:
-	poetry run ruff check
+	uv run ruff check
 
 publish: clean
-	poetry build
-	poetry publish
+	uv build
+	uv publish
 
 isort:
-	poetry run isort .
+	uv run isort .
 
 isort-check:
-	poetry run isort --diff --check .
+	uv run isort --diff --check .
 
 .ONESHELL:
 pyrightconfig:
 	jq \
       --null-input \
-      --arg venv "$$(basename $$(poetry env info -p))" \
-      --arg venvPath "$$(dirname $$(poetry env info -p))" \
+      --arg venv "$$(basename $$(uv env info -p))" \
+      --arg venvPath "$$(dirname $$(uv env info -p))" \
       '{ "venv": $$venv, "venvPath": $$venvPath }' \
       > pyrightconfig.json
 
 rename:
 	ack temporalloop -l | xargs -i{} sed -r -i "s/temporalloop/temporalloop/g" {}
+
+
+upgrade-dep:
+	uv lock -U --resolution=highest
+
+uv-check:
+	uv lock --locked --offline
+
+BUMP ?= patch
+bump:
+	uv run bump-my-version bump $(BUMP)
