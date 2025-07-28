@@ -1,6 +1,6 @@
-[project]
+ [project]
 name = "temporalloop"
-version = "0.2.1"
+version = "0.2.2"
 description = ""
 authors = [{ name = "ant31", email = "2t.antoine@gmail.com" }]
 requires-python = ">=3.12,<4"
@@ -17,7 +17,7 @@ dependencies = [
 ]
 
 [project.scripts]
-tempoloop = "temporalloop.main:main"
+temporalloop = "temporalloop.main:main"
 
 [dependency-groups]
 dev = [
@@ -61,7 +61,7 @@ allow-direct-references = true
 
 
 [tool.bumpversion]
-current_version = "0.2.1"
+current_version = "0.2.2"
 parse = "(?P<major>\\d+)\\.(?P<minor>\\d+)\\.(?P<patch>\\d+)"
 serialize = ["{major}.{minor}.{patch}"]
 search = "{current_version}"

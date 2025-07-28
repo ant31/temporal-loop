@@ -1,4 +1,5 @@
 import asyncio
+import contextlib
 import logging
 import re
 from datetime import timedelta
@@ -6,12 +7,32 @@ from typing import Any
 
 import temporalio.client
 from ant31box.importer import import_from_string
+from temporalio import activity
 from temporalio.client import WorkflowHandle
 from temporalio.service import RPCError, RPCStatusCode
 
 logger = logging.getLogger(__name__)
 
 TIMEINTERVAL_REGEX = re.compile(r"((?P<hours>\d+?)h)?((?P<minutes>\d+?)m)?((?P<seconds>\d+?)s)?")
+
+
+@contextlib.asynccontextmanager
+async def heartbeat_every(delay: int = 30):
+    """An async context manager to send heartbeats periodically."""
+
+    async def _heartbeat_in_background():
+        """Periodically sends heartbeats."""
+        while True:
+            activity.heartbeat()
+            await asyncio.sleep(delay)
+
+    heartbeat_task = asyncio.create_task(_heartbeat_in_background())
+    try:
+        yield
+    finally:
+        heartbeat_task.cancel()
+        with contextlib.suppress(asyncio.CancelledError):
+            await heartbeat_task
 
 
 def time_interval(time_str: str) -> timedelta:
