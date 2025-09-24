@@ -464,11 +464,11 @@ ignore = [
 "SIM108",
 "ANN401",
 "TRY",
-"ANN",
 "FBT001",
 "FBT002",
 "PLR2004",
-"PLR0913" # too many argument in function
+"PLR0913", # too many argument in function
+"PLC0415", # import-outside-toplevel
 ]
 
 fixable = ["ALL"]

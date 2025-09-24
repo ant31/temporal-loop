@@ -13,7 +13,9 @@ from temporalio.service import RPCError, RPCStatusCode
 
 logger = logging.getLogger(__name__)
 
-TIMEINTERVAL_REGEX = re.compile(r"((?P<hours>\d+?)h)?((?P<minutes>\d+?)m)?((?P<seconds>\d+?)s)?")
+TIMEINTERVAL_REGEX = re.compile(
+    r"((?P<hours>\d+?)h)?((?P<minutes>\d+?)m)?((?P<seconds>\d+?)s)?$"
+)
 
 
 @contextlib.asynccontextmanager
@@ -36,6 +38,8 @@ async def heartbeat_every(delay: int = 30):
 
 
 def time_interval(time_str: str) -> timedelta:
+    if not time_str:
+        raise ValueError(f"Invalid time string {time_str}")
     parts = TIMEINTERVAL_REGEX.match(time_str)
     if not parts:
         raise ValueError(f"Invalid time string {time_str}")

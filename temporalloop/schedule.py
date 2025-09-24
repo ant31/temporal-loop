@@ -16,8 +16,7 @@ from temporalio.client import (
 )
 from temporalio.service import RPCError, RPCStatusCode
 
-from temporalloop.config import Config
-from temporalloop.config_loader import TemporalScheduleSchema
+from temporalloop.config import Config, TemporalSchedule
 from temporalloop.importer import ImportFromStringError, import_from_string
 
 logger = logging.getLogger(__name__)
@@ -31,47 +30,38 @@ class ScheduleDefinition:
 
 
 class TemporalScheduler:
-    def __init__(
-        self, client, schedules_entries: dict[str, TemporalScheduleSchema], config: Config | None = None
-    ) -> None:
+    def __init__(self, client, schedules_entries: dict[str, TemporalSchedule], config: Config | None = None) -> None:
         self.client = client
         self.config = config
         self.schedules: dict[str, ScheduleDefinition] = {}
+        self.errors: list[Exception] = []
         self.prep_schedules(schedules_entries)
 
     def load_workflow(self, name: str):
-        try:
-            return import_from_string(name)
-        except ImportFromStringError as e:
-            logger.error(e)
-            raise e
+        return import_from_string(name)
 
     def load_input(self, name: str, data: dict[str, Any]):
         if not name:
             return data
-        try:
-            datacls = import_from_string(name)
-            return datacls.model_validate(data)
-        except ImportFromStringError as e:
-            logger.error(e)
-            raise e
+        datacls = import_from_string(name)
+        return datacls.model_validate(data)
 
-    def prep_schedule(self, wid: str, schedule: TemporalScheduleSchema) -> None:
+    def prep_schedule(self, wid: str, schedule: TemporalSchedule) -> None:
         if schedule.workflow_id in self.schedules:
-            raise ValueError(f"Schedule {wid} already exists.")
+            raise ValueError(f"Duplicate schedule workflow_id: {schedule.workflow_id}")
 
         workflow = self.load_workflow(schedule.workflow)
-        wid = schedule.workflow_id
+        workflow_input = self.load_input(schedule.input_schema, schedule.payload)
         pause = schedule.state == "paused"
-        # await self.client.create_schedule
+
         if schedule.state == "deleted":
             sch = None
         else:
             sch = Schedule(
                 action=ScheduleActionStartWorkflow(
                     workflow.run,
-                    self.load_input(schedule.input_schema, schedule.payload),
-                    id=wid,
+                    workflow_input,
+                    id=schedule.workflow_id,
                     task_queue=schedule.task_queue,
                 ),
                 policy=SchedulePolicy(overlap=ScheduleOverlapPolicy.BUFFER_ONE),
@@ -85,11 +75,18 @@ class TemporalScheduler:
                 ),
                 state=ScheduleState(note=schedule.comment, paused=pause),
             )
-        self.schedules[schedule.workflow_id] = ScheduleDefinition(schedule=sch, state=schedule.state, wid=wid)
+        self.schedules[schedule.workflow_id] = ScheduleDefinition(
+            schedule=sch, state=schedule.state, wid=schedule.workflow_id
+        )
 
-    def prep_schedules(self, schedules: dict[str, TemporalScheduleSchema]) -> None:
+    def prep_schedules(self, schedules: dict[str, TemporalSchedule]) -> None:
         for wid, schedule in schedules.items():
-            self.prep_schedule(wid, schedule)
+            try:
+                self.prep_schedule(wid, schedule)
+            except (ImportFromStringError, ValueError, AttributeError) as e:
+                err_msg = f"Failed to prepare schedule '{wid}': {e}"
+                logger.error(err_msg)
+                self.errors.append(Exception(err_msg))
 
     async def get_schedule_handle(self, wid: str) -> ScheduleHandle | None:
         """Get schedule by workflow id
@@ -138,6 +135,10 @@ class TemporalScheduler:
         return False
 
     async def sync_schedules(self):
+        if self.errors:
+            error_details = "\n".join(f"- {e}" for e in self.errors)
+            raise RuntimeError(f"Aborting sync due to preparation errors:\n{error_details}")
+
         handlers = []
         for wid, schedule in self.schedules.items():
             if schedule.state == "deleted":
@@ -149,6 +150,7 @@ class TemporalScheduler:
                     raise ValueError(f"Schedule {wid} is not defined.")
                 coro = self.created_schedule(wid, schedule.schedule)
             else:
+                # This should be caught during prep, but is a safeguard.
                 raise ValueError(f"Unknown state {schedule.state} for schedule {wid}")
             handlers.append(coro)
         return await asyncio.gather(*handlers)

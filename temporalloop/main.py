@@ -1,5 +1,10 @@
 #!/usr/bin/env python3
-from temporalloop.cmd.looper import main
+from temporalloop.cmd.looper import app
+
+
+def main():
+    app()
+
 
 if __name__ == "__main__":
-    main()  # pylint: disable=no-value-for-parameter # pragma: no cover
+    main()  # pragma: no cover
