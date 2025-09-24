@@ -1,0 +1,31 @@
+site_name: TemporalLoop
+site_url: https://ant31.github.io/temporalloop/
+theme:
+  name: material
+plugins:
+  - search
+  - mkdocstrings:
+      handlers:
+        python:
+          options:
+            show_root_heading: true
+            show_source: false
+nav:
+  - Home: index.md
+  - User Guide:
+      - Getting Started: getting-started.md
+      - Configuration: configuration.md
+      - CLI: cli.md
+      - Client Handling: client-handling.md
+      - Programmatic Usage: programmatic-usage.md
+      - Managing Schedules: schedules.md
+  - API Reference:
+      - Configuration: api/config.md
+      - Worker & Looper: api/worker.md
+      - Scheduler: api/schedule.md
+  - Project Info:
+      - Changelog: changelog.md
+      - Migration Guide: migration.md
+  - For Contributors:
+      - Core Concepts: core-concepts.md
+      - Contributing: contributing.md
