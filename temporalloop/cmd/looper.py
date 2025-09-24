@@ -69,7 +69,7 @@ def main(
         typer.Option(
             "--activity",
             "-a",
-            help="Activity function managed by the worker: python.module:activity_function. Repeat for more activities.",
+            help="Activity: python.module:activity_function. Repeat for more activities.",
         ),
     ] = None,
     interceptor: Annotated[
