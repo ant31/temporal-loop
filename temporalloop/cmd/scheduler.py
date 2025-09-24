@@ -1,13 +1,17 @@
 #!/usr/bin/env python3
 import asyncio
+from pathlib import Path
+from typing import Annotated, Optional
 
-import click
+import typer
 import yaml
 
 from temporalloop.client import tclient
 from temporalloop.config import Config
 from temporalloop.config_loader import TemporalScheduleSchema, load_config_from_yaml
 from temporalloop.schedule import TemporalScheduler
+
+app = typer.Typer()
 
 
 async def run(config: Config):
@@ -18,44 +22,32 @@ async def run(config: Config):
 
 # pylint: disable=no-value-for-parameter
 # pylint: disable=too-many-arguments
-@click.command(context_settings={"auto_envvar_prefix": "TEMPORALRUNNER"})
-@click.option(
-    "--config",
-    "-c,",
-    type=click.Path(exists=True),
-    default=None,
-    help="Configuration file in YAML format.",
-    show_default=True,
-)
-@click.option(
-    "--namespace",
-    "-n",
-    type=str,
-    default="default",
-    help="temporalio namespace",
-    show_default=True,
-)
-@click.option(
-    "--host",
-    type=str,
-    default=None,
-    help="Address of the Temporal Frontend",
-    show_default=True,
-)
-@click.option(
-    "--schedules-file",
-    "-s",
-    type=str,
-    default=None,
-    help="Yaml file with the schedules ",
-)
+@app.command(context_settings={"auto_envvar_prefix": "TEMPORALRUNNER"})
 def scheduler(
-    config: str,
-    host: str,
-    namespace: str,
-    schedules_file: str | None,
+    config: Annotated[
+        Path,
+        typer.Option(
+            "--config",
+            "-c",
+            exists=True,
+            help="Configuration file in YAML format.",
+            show_default=True,
+        ),
+    ],
+    host: Annotated[
+        Optional[str],
+        typer.Option("--host", help="Address of the Temporal Frontend", show_default=True),
+    ] = None,
+    namespace: Annotated[
+        Optional[str],
+        typer.Option("--namespace", "-n", help="temporalio namespace", show_default=True),
+    ] = "default",
+    schedules_file: Annotated[
+        Optional[Path],
+        typer.Option("--schedules-file", "-s", help="Yaml file with the schedules "),
+    ] = None,
 ) -> None:
-    _config = load_config_from_yaml(config)
+    _config = load_config_from_yaml(str(config))
     if namespace:
         _config.namespace = namespace
     if host:

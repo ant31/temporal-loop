@@ -1,34 +1,22 @@
 #!/usr/bin/env python3
 import asyncio
 import logging
-import platform
+from pathlib import Path
+from typing import Annotated, Optional
 
-import click
+import typer
 
-import temporalloop
-from temporalloop.config import LOG_LEVELS, LOGGING_CONFIG, Config, WorkerConfig
+from temporalloop.config import LOGGING_CONFIG, Config, WorkerConfig
 from temporalloop.config_loader import load_config_from_yaml
 from temporalloop.worker import Looper
 
-LEVEL_CHOICES = click.Choice(list(LOG_LEVELS.keys()))
+from .models import LogLevel
 
 STARTUP_FAILURE = 3
 
 logger = logging.getLogger("temporalloop.info")
 
-
-def print_version(ctx: click.Context, param: click.Parameter, value: bool) -> None:
-    _ = param
-    if not value or ctx.resilient_parsing:
-        return
-    click.echo(
-        (
-            f"Running temporalloop {temporalloop.__version__},",
-            f"with {platform.python_implementation()} {platform.python_version()}",
-            f"on {platform.system()},",
-        )
-    )
-    ctx.exit()
+app = typer.Typer()
 
 
 def run(config: Config) -> None:
@@ -39,110 +27,95 @@ def run(config: Config) -> None:
 # pylint: disable=no-value-for-parameter
 # pylint: disable=too-many-arguments
 # pylint: disable=too-many-positional-arguments
-@click.command(context_settings={"auto_envvar_prefix": "TEMPORALRUNNER"})
-@click.option(
-    "--config",
-    "-c,",
-    type=click.Path(exists=True),
-    default=None,
-    help="Configuration file in YAML format.",
-    show_default=True,
-)
-@click.option(
-    "--namespace",
-    "-n",
-    type=str,
-    default="default",
-    help="temporalio namespace",
-    show_default=True,
-)
-@click.option(
-    "--host",
-    type=str,
-    default=None,
-    help="Address of the Temporal Frontend",
-    show_default=True,
-)
-@click.option(
-    "--queue",
-    "-q",
-    type=str,
-    default=None,
-    help="Queue to listen on",
-    show_default=True,
-)
-@click.option(
-    "--workflow",
-    "-w",
-    default=[],
-    multiple=True,
-    help="Workflow managed by the worker: python.module:WorkflowClass. repeat the option -w to add more workflows",
-)
-@click.option(
-    "--activity",
-    "-a",
-    default=[],
-    multiple=True,
-    help="Activity function managed by the worker:"
-    + "python.module:activity_function. repeat the option -a to add more activities",
-)
-@click.option(
-    "--interceptor",
-    "-i",
-    default=[],
-    multiple=True,
-    help="Interceptor class to add, python.module:InterceptorClass. repeat the option -i to add more interceptors",
-)
-@click.option(
-    "--log-config",
-    type=click.Path(exists=True),
-    default=None,
-    help="Logging configuration file. Supported formats: .ini, .json, .yaml.",
-    show_default=True,
-)
-@click.option(
-    "--log-level",
-    type=LEVEL_CHOICES,
-    default=None,
-    help="Log level. [default: info]",
-    show_default=True,
-)
-@click.option(
-    "--use-colors/--no-use-colors",
-    is_flag=True,
-    default=None,
-    help="Enable/Disable colorized logging.",
-)
-@click.option(
-    "--version",
-    is_flag=True,
-    callback=print_version,
-    expose_value=False,
-    is_eager=True,
-    help="Display the temporalloop version and exit.",
-)
+@app.command(context_settings={"auto_envvar_prefix": "TEMPORALRUNNER"})
 def main(
-    config: str,
-    host: str,
-    queue: str,
-    namespace: str,
-    use_colors: bool,
-    log_level: str,
-    log_config: str,
-    activity: list[str],
-    workflow: list[str],
-    interceptor: list[str],
+    config: Annotated[
+        Optional[Path],
+        typer.Option(
+            "--config",
+            "-c",
+            exists=True,
+            help="Configuration file in YAML format.",
+            show_default=True,
+        ),
+    ] = None,
+    namespace: Annotated[
+        Optional[str],
+        typer.Option(
+            "--namespace",
+            "-n",
+            help="temporalio namespace",
+            show_default=True,
+        ),
+    ] = "default",
+    host: Annotated[
+        Optional[str],
+        typer.Option("--host", help="Address of the Temporal Frontend", show_default=True),
+    ] = None,
+    queue: Annotated[
+        Optional[str],
+        typer.Option("--queue", "-q", help="Queue to listen on", show_default=True),
+    ] = None,
+    workflow: Annotated[
+        Optional[list[str]],
+        typer.Option(
+            "--workflow",
+            "-w",
+            help="Workflow managed by the worker: python.module:WorkflowClass. repeat the option -w to add more workflows",
+        ),
+    ] = None,
+    activity: Annotated[
+        Optional[list[str]],
+        typer.Option(
+            "--activity",
+            "-a",
+            help="Activity function managed by the worker: python.module:activity_function. repeat the option -a to add more activities",
+        ),
+    ] = None,
+    interceptor: Annotated[
+        Optional[list[str]],
+        typer.Option(
+            "--interceptor",
+            "-i",
+            help="Interceptor class to add, python.module:InterceptorClass. repeat the option -i to add more interceptors",
+        ),
+    ] = None,
+    log_config: Annotated[
+        Optional[Path],
+        typer.Option(
+            "--log-config",
+            exists=True,
+            help="Logging configuration file. Supported formats: .ini, .json, .yaml.",
+            show_default=True,
+        ),
+    ] = None,
+    log_level: Annotated[
+        LogLevel,
+        typer.Option(
+            "--log-level",
+            help="Log level.",
+            show_default=True,
+            case_sensitive=False,
+        ),
+    ] = LogLevel.info,
+    use_colors: Annotated[
+        bool,
+        typer.Option(
+            "--use-colors/--no-use-colors",
+            help="Enable/Disable colorized logging.",
+        ),
+    ] = True,
 ) -> None:
     if config:
-        _config = load_config_from_yaml(config)
+        _config = load_config_from_yaml(str(config))
         if host:
             _config.host = host
         if namespace:
             _config.namespace = namespace
         if log_level:
-            _config.log_level = log_level
+            _config.log_level = log_level.value
         if log_config:
-            _config.log_config = log_config
+            _config.log_config = str(log_config)
         if use_colors is not None:
             _config.use_colors = use_colors
     else:
@@ -158,11 +131,11 @@ def main(
             workers=[worker_config],
             interceptors=interceptor,
             use_colors=use_colors,
-            log_config=LOGGING_CONFIG if log_config is None else log_config,
-            log_level=log_level,
+            log_config=LOGGING_CONFIG if log_config is None else str(log_config),
+            log_level=log_level.value,
         )
     run(_config)
 
 
 if __name__ == "__main__":
-    main()  # pragma: no cover
+    app()
