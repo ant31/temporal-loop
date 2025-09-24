@@ -150,14 +150,14 @@ class Looper:
     async def run(self):
         self.install_signal_handlers()
         self.config.configure_logging()
-        logger.info("Connecting %s workers", len(self.config.temporalio.workers))
+        logger.info("Connecting %s workers", len(self.config.workers))
         self.workers = await self.prepare_workers()
-        logger.info("Starting %s workers", len(self.config.temporalio.workers))
+        logger.info("Starting %s workers", len(self.config.workers))
         await asyncio.gather(*[x.run() for x in self.workers])
 
     async def prepare_workers(self) -> list[Worker]:
         worker_creations = [
-            self._create_worker_from_config(worker_config) for worker_config in self.config.temporalio.workers
+            self._create_worker_from_config(worker_config) for worker_config in self.config.workers
         ]
         created_workers: list[tuple[Worker, Client]] = await asyncio.gather(*worker_creations)
 

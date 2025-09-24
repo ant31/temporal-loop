@@ -99,7 +99,6 @@ class TemporalSettings(BaseModel):
     host: str = "127.0.0.1:7233"
     namespace: str = "default"
     default_factory: str = "temporalloop.worker:WorkerFactory"
-    workers: list[WorkerSettings] = Field(default_factory=list)
     interceptors: list[str] = Field(default_factory=list)
     converter: str | None = None
     pre_init: list[str] = Field(default_factory=list)
@@ -144,8 +143,34 @@ class Config(BaseSettings):
     model_config = SettingsConfigDict(case_sensitive=False)
 
     temporalio: TemporalSettings = Field(default_factory=TemporalSettings)
+    workers: list[WorkerSettings] = Field(default_factory=list)
     logging: LoggingSettings = Field(default_factory=LoggingSettings)
     schedules: dict[str, TemporalSchedule] = Field(default_factory=dict)
+
+    @model_validator(mode="after")
+    def inherit_worker_settings(self) -> "Config":
+        for worker in self.workers:
+            if worker.host is None:
+                worker.host = self.temporalio.host
+            if worker.namespace is None:
+                worker.namespace = self.temporalio.namespace
+            if worker.factory is None:
+                worker.factory = self.temporalio.default_factory
+            if worker.converter is None:
+                worker.converter = self.temporalio.converter
+            if worker.interceptors is None:
+                worker.interceptors = self.temporalio.interceptors
+            if worker.pre_init is None:
+                worker.pre_init = self.temporalio.pre_init
+            if worker.max_concurrent_activities is None:
+                worker.max_concurrent_activities = self.temporalio.max_concurrent_activities
+            if worker.max_concurrent_workflow_tasks is None:
+                worker.max_concurrent_workflow_tasks = self.temporalio.max_concurrent_workflow_tasks
+            if worker.metric_bind_address is None:
+                worker.metric_bind_address = self.temporalio.metric_bind_address
+            if worker.enable_metrics is None:
+                worker.enable_metrics = self.temporalio.enable_metrics
+        return self
 
     def configure_logging(self) -> None:
         log_config = self.logging.log_config
