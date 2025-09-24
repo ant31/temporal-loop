@@ -61,7 +61,7 @@ def main(
         typer.Option(
             "--workflow",
             "-w",
-            help="Workflow managed by the worker: python.module:WorkflowClass. repeat the option -w to add more workflows",
+            help="Workflow managed by the worker: python.module:WorkflowClass. Repeat for more workflows.",
         ),
     ] = None,
     activity: Annotated[
@@ -69,7 +69,7 @@ def main(
         typer.Option(
             "--activity",
             "-a",
-            help="Activity function managed by the worker: python.module:activity_function. repeat the option -a to add more activities",
+            help="Activity function managed by the worker: python.module:activity_function. Repeat for more activities.",
         ),
     ] = None,
     interceptor: Annotated[
@@ -77,7 +77,7 @@ def main(
         typer.Option(
             "--interceptor",
             "-i",
-            help="Interceptor class to add, python.module:InterceptorClass. repeat the option -i to add more interceptors",
+            help="Interceptor class to add: python.module:InterceptorClass. Repeat for more interceptors.",
         ),
     ] = None,
     log_config: Annotated[
