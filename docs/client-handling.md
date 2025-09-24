@@ -46,8 +46,8 @@ temporalio:
   # Use your custom factory for all workers by default
   default_factory: "my_project.factories:MyWorkerFactory"
 
-workers:
-  # ... your workers here ...
+  workers:
+    # ... your workers here ...
 ```
 
 You can also specify a factory on a per-worker basis if different workers need different client configurations.

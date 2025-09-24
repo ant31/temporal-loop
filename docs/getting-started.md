@@ -66,9 +66,9 @@ temporalio:
   host: "127.0.0.1:7233"
   namespace: "default"
 
-workers:
-  - name: "greeting-worker"
-    # The task queue this worker will listen on
+  workers:
+    - name: "greeting-worker"
+      # The task queue this worker will listen on
     queue: "greeting-queue"
     # Link to your workflow class
     workflows:

@@ -4,7 +4,7 @@ TemporalLoop uses a YAML file for configuration, providing a clear and declarati
 
 ## YAML Configuration
 
-The configuration file is divided into three main sections: `temporalio`, `workers`, and `logging`.
+The configuration file is divided into three main top-level sections: `temporalio`, `logging`, and `schedules`.
 
 ### `temporalio` Section (Global)
 
@@ -41,12 +41,14 @@ temporalio:
 
 ### `workers` Section
 
-This is a list where each item defines a worker.
+This is a list under the `temporalio` key where each item defines a worker.
 
 ```yaml
-workers:
-  - name: "example-worker-1"
-    queue: "example-queue-1"
+temporalio:
+  # ... other temporalio settings ...
+  workers:
+    - name: "example-worker-1"
+      queue: "example-queue-1"
     workflows:
       - "your_package.workflows:YourWorkflow"
     activities:
