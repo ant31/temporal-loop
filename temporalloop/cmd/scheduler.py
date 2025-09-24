@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 import asyncio
 from pathlib import Path
-from typing import Annotated, Optional
+from typing import Annotated
 
 import typer
 import yaml
@@ -35,15 +35,15 @@ def scheduler(
         ),
     ],
     host: Annotated[
-        Optional[str],
+        str | None,
         typer.Option("--host", help="Address of the Temporal Frontend", show_default=True),
     ] = None,
     namespace: Annotated[
-        Optional[str],
+        str | None,
         typer.Option("--namespace", "-n", help="temporalio namespace", show_default=True),
     ] = "default",
     schedules_file: Annotated[
-        Optional[Path],
+        Path | None,
         typer.Option("--schedules-file", "-s", help="Yaml file with the schedules "),
     ] = None,
 ) -> None:

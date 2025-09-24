@@ -2,7 +2,7 @@
 import asyncio
 import logging
 from pathlib import Path
-from typing import Annotated, Optional
+from typing import Annotated
 
 import typer
 
@@ -30,7 +30,7 @@ def run(config: Config) -> None:
 @app.command(context_settings={"auto_envvar_prefix": "TEMPORALRUNNER"})
 def main(
     config: Annotated[
-        Optional[Path],
+        Path | None,
         typer.Option(
             "--config",
             "-c",
@@ -40,7 +40,7 @@ def main(
         ),
     ] = None,
     namespace: Annotated[
-        Optional[str],
+        str | None,
         typer.Option(
             "--namespace",
             "-n",
@@ -49,15 +49,15 @@ def main(
         ),
     ] = "default",
     host: Annotated[
-        Optional[str],
+        str | None,
         typer.Option("--host", help="Address of the Temporal Frontend", show_default=True),
     ] = None,
     queue: Annotated[
-        Optional[str],
+        str | None,
         typer.Option("--queue", "-q", help="Queue to listen on", show_default=True),
     ] = None,
     workflow: Annotated[
-        Optional[list[str]],
+        list[str] | None,
         typer.Option(
             "--workflow",
             "-w",
@@ -65,7 +65,7 @@ def main(
         ),
     ] = None,
     activity: Annotated[
-        Optional[list[str]],
+        list[str] | None,
         typer.Option(
             "--activity",
             "-a",
@@ -73,7 +73,7 @@ def main(
         ),
     ] = None,
     interceptor: Annotated[
-        Optional[list[str]],
+        list[str] | None,
         typer.Option(
             "--interceptor",
             "-i",
@@ -81,7 +81,7 @@ def main(
         ),
     ] = None,
     log_config: Annotated[
-        Optional[Path],
+        Path | None,
         typer.Option(
             "--log-config",
             exists=True,
