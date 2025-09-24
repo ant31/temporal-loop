@@ -141,7 +141,7 @@ class LoggingSettings(BaseModel):
 
 
 class Config(BaseSettings):
-    model_config = SettingsConfigDict(case_sensitive=False)
+    model_config = SettingsConfigDict(case_sensitive=False, extra="ignore")
 
     temporalio: TemporalSettings = Field(default_factory=TemporalSettings)
     logging: LoggingSettings = Field(default_factory=LoggingSettings)
