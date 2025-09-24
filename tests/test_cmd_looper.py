@@ -47,8 +47,8 @@ def test_looper_cli_with_args(mock_run):
     config_arg = mock_run.call_args[0][0]
     assert config_arg.temporalio.host == "testhost:1234"
     assert config_arg.temporalio.namespace == "testns"
-    assert len(config_arg.workers) == 1
-    worker = config_arg.workers[0]
+    assert len(config_arg.temporalio.workers) == 1
+    worker = config_arg.temporalio.workers[0]
     assert worker.queue == "testq"
     assert worker.workflows == ["my.workflow:W"]
     assert worker.activities == ["my.activity:a"]

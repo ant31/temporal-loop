@@ -29,17 +29,17 @@ def test_config_from_dict():
         "temporalio": {
             "host": "remotehost:7233",
             "namespace": "production",
+            "workers": [{"name": "worker-1", "queue": "queue-1"}],
         },
-        "workers": [{"name": "worker-1", "queue": "queue-1"}],
         "logging": {"level": "DEBUG"},
     }
     config = Config.model_validate(config_dict)
     assert config.temporalio.host == "remotehost:7233"
     assert config.temporalio.namespace == "production"
     assert config.logging.level == "DEBUG"
-    assert len(config.workers) == 1
-    assert config.workers[0].name == "worker-1"
-    assert config.workers[0].host == "remotehost:7233"
+    assert len(config.temporalio.workers) == 1
+    assert config.temporalio.workers[0].name == "worker-1"
+    assert config.temporalio.workers[0].host == "remotehost:7233"
 
 
 def test_config_from_empty_dict():
@@ -48,7 +48,7 @@ def test_config_from_empty_dict():
     assert config.temporalio.host == "127.0.0.1:7233"
     assert config.temporalio.namespace == "default"
     assert config.logging.level == "INFO"
-    assert len(config.workers) == 0
+    assert len(config.temporalio.workers) == 0
 
 
 def test_config_from_yaml(tmp_path):
@@ -57,9 +57,9 @@ def test_config_from_yaml(tmp_path):
 temporalio:
   host: "yamlhost:7233"
   namespace: "yaml_namespace"
-workers:
-  - name: "worker-from-yaml"
-    queue: "yaml-queue"
+  workers:
+    - name: "worker-from-yaml"
+      queue: "yaml-queue"
 logging:
   level: "WARNING"
 """
@@ -70,5 +70,5 @@ logging:
     assert config.temporalio.host == "yamlhost:7233"
     assert config.temporalio.namespace == "yaml_namespace"
     assert config.logging.level == "WARNING"
-    assert len(config.workers) == 1
-    assert config.workers[0].name == "worker-from-yaml"
+    assert len(config.temporalio.workers) == 1
+    assert config.temporalio.workers[0].name == "worker-from-yaml"

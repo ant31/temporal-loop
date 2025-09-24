@@ -126,8 +126,8 @@ def main(  # pylint: disable=too-many-arguments
                     "host": host,
                     "namespace": namespace,
                     "interceptors": interceptor or [],
+                    "workers": [worker_config.model_dump()],
                 },
-                "workers": [worker_config.model_dump()],
                 "logging": {"use_colors": use_colors, "level": log_level.value},
             }
         )

@@ -15,15 +15,15 @@ def mock_config():
         "temporalio": {
             "host": "localhost:7233",
             "namespace": "default",
+            "workers": [
+                {
+                    "name": "test-worker",
+                    "queue": "test-queue",
+                    "workflows": [],
+                    "activities": [],
+                }
+            ],
         },
-        "workers": [
-            {
-                "name": "test-worker",
-                "queue": "test-queue",
-                "workflows": [],
-                "activities": [],
-            }
-        ],
     }
     config = Config.model_validate(config_data)
     return config
@@ -33,7 +33,7 @@ def mock_config():
 async def test_worker_factory_client_creation(mock_config):
     """Test WorkerFactory client creation."""
     factory = WorkerFactory(mock_config)
-    worker_config = mock_config.workers[0]
+    worker_config = mock_config.temporalio.workers[0]
     with patch("temporalio.client.Client.connect", new_callable=AsyncMock) as mock_connect:
         mock_connect.return_value = "new_client"
         client = await factory.client(worker_config)
@@ -46,7 +46,7 @@ async def test_worker_factory_new_worker(mock_config):
     """Test WorkerFactory new_worker creation."""
     mock_client = MagicMock(spec=Client)
     factory = WorkerFactory(mock_config)
-    worker_config = mock_config.workers[0]
+    worker_config = mock_config.temporalio.workers[0]
 
     with patch("temporalloop.worker.Worker", spec=Worker) as mock_worker_class:
         worker_instance = await factory.new_worker(
@@ -65,7 +65,7 @@ async def test_worker_factory_new_worker(mock_config):
 async def test_looper_prepare_workers(mock_config):
     """Test Looper worker preparation."""
     # Add a second worker with the same config to test client de-duplication
-    mock_config.workers.append(mock_config.workers[0])
+    mock_config.temporalio.workers.append(mock_config.temporalio.workers[0])
 
     looper = Looper(mock_config)
     mock_worker_instance = MagicMock(spec=Worker)
