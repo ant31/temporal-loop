@@ -36,7 +36,7 @@ class TemporalScheduler:
         self.errors: list[Exception] = []
         self.prep_schedules(schedules_entries)
 
-    def load_workflow(self, name: str):
+    def load_workflow(self, name: str) -> Any:
         return import_from_string(name)
 
     def load_input(self, name: str, data: dict[str, Any]):
