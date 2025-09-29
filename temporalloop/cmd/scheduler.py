@@ -28,8 +28,8 @@ async def run(config: Config):
         await sched.sync_schedules()
         logger.info("Schedule synchronization completed successfully.")
     except RuntimeError as e:
-        logger.error("Schedule synchronization failed.")
-        print(e)
+        logger.error("Schedule synchronization failed.", exc_info=True)
+        
         raise typer.Exit(code=1) from e
 
 
