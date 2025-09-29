@@ -132,7 +132,7 @@ class Looper:
         self.clients: list[Client] = []
 
     @staticmethod
-    @functools.cache
+    @functools.lru_cache(maxsize=128)
     def _load_function(path: str) -> Any:
         return import_from_string(path)
 
