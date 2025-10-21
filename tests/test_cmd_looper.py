@@ -54,6 +54,38 @@ temporalio:
 
 
 @patch("temporalloop.cmd.looper.run")
+def test_looper_cli_namespace_override_propagates_to_workers(mock_run, tmp_path):
+    """Test that the --namespace CLI override is propagated to workers."""
+    config_file = tmp_path / "config.yaml"
+    config_file.write_text(
+        """
+temporalio:
+  host: "config-host:7233"
+  namespace: "config-namespace"
+  workers:
+    - name: "worker-1"
+      queue: "queue-1"
+"""
+    )
+    result = runner.invoke(
+        app,
+        [
+            "--config",
+            str(config_file),
+            "--namespace",
+            "cli-namespace",
+        ],
+    )
+    assert result.exit_code == 0
+    mock_run.assert_called_once()
+    config_arg = mock_run.call_args[0][0]
+    assert config_arg.temporalio.namespace == "cli-namespace"
+    assert len(config_arg.temporalio.workers) == 1
+    worker = config_arg.temporalio.workers[0]
+    assert worker.namespace == "cli-namespace"
+
+
+@patch("temporalloop.cmd.looper.run")
 def test_looper_cli_with_args(mock_run):
     """Test the looper CLI with command-line arguments."""
     result = runner.invoke(
