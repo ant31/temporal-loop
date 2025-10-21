@@ -96,8 +96,8 @@ class WorkerSettings(BaseModel):
 
 
 class TemporalSettings(BaseModel):
-    host: str = "127.0.0.1:7233"
-    namespace: str = "default"
+    host: str | None = "127.0.0.1:7233"
+    namespace: str | None = "default"
     default_factory: str = "temporalloop.worker:WorkerFactory"
     interceptors: list[str] = Field(default_factory=list)
     converter: str | None = None

@@ -43,11 +43,12 @@ def main(  # pylint: disable=too-many-arguments
             "--namespace",
             "-n",
             help="temporalio namespace",
+            show_default=False,
         ),
     ] = None,
     host: Annotated[
         str | None,
-        typer.Option("--host", help="Address of the Temporal Frontend"),
+        typer.Option("--host", help="Address of the Temporal Frontend", show_default=False),
     ] = None,
     queue: Annotated[
         str | None,
@@ -119,14 +120,18 @@ def main(  # pylint: disable=too-many-arguments
             queue=queue,
             interceptors=interceptor or [],
         )
+        temporalio_config = {
+            "interceptors": interceptor or [],
+            "workers": [worker_config.model_dump()],
+        }
+        if host:
+            temporalio_config["host"] = host
+        if namespace:
+            temporalio_config["namespace"] = namespace
+
         _config = Config.model_validate(
             {
-                "temporalio": {
-                    "host": host or "localhost:7233",
-                    "namespace": namespace,
-                    "interceptors": interceptor or [],
-                    "workers": [worker_config.model_dump()],
-                },
+                "temporalio": temporalio_config,
                 "logging": {"use_colors": use_colors, "level": log_level.value},
             }
         )
