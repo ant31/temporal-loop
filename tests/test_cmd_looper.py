@@ -182,13 +182,16 @@ temporalio:
     # We must call prepare_workers manually as we've mocked out the Looper.
     # This will trigger the Client.connect call.
     looper_instance = mock_looper.return_value
-    looper_instance.prepare_workers.side_effect = Looper.prepare_workers
-    looper_instance._create_worker_from_config.side_effect = Looper._create_worker_from_config
     looper_instance.config = config_arg
+    # Assign side effects to call the real methods on the instance
+    looper_instance.prepare_workers.side_effect = lambda: Looper.prepare_workers(looper_instance)
+    looper_instance._create_worker_from_config.side_effect = (
+        lambda wc: Looper._create_worker_from_config(looper_instance, wc)
+    )
 
     import asyncio
 
-    asyncio.run(looper_instance.prepare_workers(looper_instance))
+    asyncio.run(looper_instance.prepare_workers())
 
     mock_connect.assert_called_once()
     _, kwargs = mock_connect.call_args
