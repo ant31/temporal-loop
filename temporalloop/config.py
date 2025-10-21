@@ -180,5 +180,5 @@ class Config(BaseSettings):
     @classmethod
     def from_yaml(cls, path: str) -> "Config":
         with open(path, encoding="utf-8") as f:
-            data = yaml.safe_load(f)
+            data = yaml.safe_load(f) or {}
         return cls.model_validate(data)
