@@ -1,9 +1,8 @@
-from unittest.mock import AsyncMock, patch
+from unittest.mock import patch
 
 from typer.testing import CliRunner
 
 from temporalloop.cmd.looper import app
-from temporalloop.worker import Looper
 
 runner = CliRunner()
 
