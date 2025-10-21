@@ -43,12 +43,11 @@ def main(  # pylint: disable=too-many-arguments
             "--namespace",
             "-n",
             help="temporalio namespace",
-            show_default=True,
         ),
     ] = None,
     host: Annotated[
         str | None,
-        typer.Option("--host", help="Address of the Temporal Frontend", show_default=True),
+        typer.Option("--host", help="Address of the Temporal Frontend"),
     ] = None,
     queue: Annotated[
         str | None,
