@@ -19,7 +19,10 @@ def load_config_with_overrides(config_path: Path, host: str | None, namespace: s
         config.temporalio.host = host
     if namespace is not None:
         config.temporalio.namespace = namespace
+        # Propagate namespace override to all workers
+        for worker in config.temporalio.workers:
+            worker.namespace = namespace
 
-    # Manually re-apply the inheritance to propagate the new host and namespace to workers
+    # Manually re-apply the inheritance to propagate the new host to workers
     config.temporalio.inherit_worker_settings()
     return config
