@@ -114,8 +114,8 @@ class TemporalSettings(BaseModel):
             # This ensures that CLI overrides are propagated correctly.
             if worker.host is None:
                 worker.host = self.host
-            if worker.namespace is None:
-                worker.namespace = self.namespace
+
+            worker.namespace = self.namespace
             if worker.factory is None:
                 worker.factory = self.default_factory
             if worker.converter is None:
