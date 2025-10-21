@@ -149,8 +149,8 @@ temporalio:
     assert worker2.namespace == "worker-2-namespace"
 
 
-@patch("temporalloop.cmd.looper.run")
-def test_looper_cli_config_namespace_without_overrides(mock_run, tmp_path):
+@patch("temporalio.client.Client.connect", new_callable=AsyncMock)
+def test_looper_cli_config_namespace_without_overrides(mock_connect, tmp_path):
     """Test that the namespace from the config file is used when no CLI overrides are given."""
     config_file = tmp_path / "config.yaml"
     config_file.write_text(
@@ -163,20 +163,21 @@ temporalio:
       queue: "queue-1"
 """
     )
-    result = runner.invoke(
-        app,
-        [
-            "--config",
-            str(config_file),
-        ],
-    )
+    # Patch the Looper's run method to prevent it from running forever in the test
+    with patch("temporalloop.worker.Looper.run", new_callable=AsyncMock):
+        result = runner.invoke(
+            app,
+            [
+                "--config",
+                str(config_file),
+            ],
+        )
+
     assert result.exit_code == 0
-    mock_run.assert_called_once()
-    config_arg = mock_run.call_args[0][0]
-    assert config_arg.temporalio.namespace == "toto"
-    assert len(config_arg.temporalio.workers) == 1
-    worker = config_arg.temporalio.workers[0]
-    assert worker.namespace == "toto"
+    mock_connect.assert_called_once()
+    # Check the kwargs passed to Client.connect
+    _, kwargs = mock_connect.call_args
+    assert kwargs.get("namespace") == "toto"
 
 
 @patch("temporalloop.cmd.looper.run")
