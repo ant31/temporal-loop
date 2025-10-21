@@ -147,6 +147,11 @@ class Config(BaseSettings):
     logging: LoggingSettings = Field(default_factory=LoggingSettings)
     schedules: dict[str, TemporalSchedule] = Field(default_factory=dict)
 
+    @model_validator(mode="after")
+    def _inherit_worker_settings(self) -> "Config":
+        self.temporalio.inherit_worker_settings()
+        return self
+
     def configure_logging(self) -> None:
         log_config = self.logging.log_config
         if log_config:
