@@ -72,3 +72,36 @@ logging:
     assert config.logging.level == "WARNING"
     assert len(config.temporalio.workers) == 1
     assert config.temporalio.workers[0].name == "worker-from-yaml"
+
+
+def test_worker_settings_inheritance():
+    """Test that worker settings inherit from the global temporalio config."""
+    config_dict = {
+        "temporalio": {
+            "host": "global-host",
+            "namespace": "global-namespace",
+            "workers": [
+                {
+                    "name": "worker-1",
+                    "queue": "queue-1",
+                },
+                {
+                    "name": "worker-2",
+                    "queue": "queue-2",
+                    "host": "worker-host",
+                },
+            ],
+        },
+    }
+    config = Config.model_validate(config_dict)
+    assert len(config.temporalio.workers) == 2
+    worker1 = config.temporalio.workers[0]
+    worker2 = config.temporalio.workers[1]
+
+    # Worker 1 should inherit global settings
+    assert worker1.host == "global-host"
+    assert worker1.namespace == "global-namespace"
+
+    # Worker 2 should use its own host and inherit global namespace
+    assert worker2.host == "worker-host"
+    assert worker2.namespace == "global-namespace"
