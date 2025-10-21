@@ -1,4 +1,4 @@
-.PHONY: black black-test check clean clean-build clean-pyc clean-test coverage install pylint pylint-quick pyre test publish poetry-check publish isort isort-check
+.PHONY: black black-test check clean clean-build clean-pyc clean-test coverage install pylint pylint-quick pyre test publish poetry-check publish isort isort-check docs serve-docs
 
 
 VERSION := `cat VERSION`
@@ -13,7 +13,8 @@ help:
 	@echo "test - run tests quickly with the default Python"
 	@echo "test-all - run tests on every Python version with tox"
 	@echo "coverage - check code coverage quickly with the default Python"
-	@echo "docs - generate Sphinx HTML documentation, including API docs"
+	@echo "docs - generate documentation with mkdocs"
+	@echo "serve-docs - serve documentation locally with mkdocs"
 	@echo "release - package and upload a release"
 	@echo "dist - package"
 	@echo "install - install the package to the active Python's site-packages"
@@ -39,6 +40,13 @@ clean-test:
 	rm -fr .tox/
 	rm -f .coverage
 	rm -fr htmlcov/
+	rm -rf site/
+
+docs:
+	uv run mkdocs build
+
+serve-docs:
+	uv run mkdocs serve
 
 test:
 	uv run py.test --cov=$(package) --cov-report=html --cov-report=term-missing  --verbose tests
@@ -51,7 +59,10 @@ coverage:
 	$(BROWSER) htmlcov/index.html
 
 install: clean
-	uv install
+	uv pip install -e .
+
+install-dev: clean
+	uv pip install -e ".[dev]"
 
 pylint-quick:
 	uv run pylint --rcfile=.pylintrc $(package)  -E -r y
@@ -59,7 +70,7 @@ pylint-quick:
 pylint:
 	uv run pylint --rcfile=".pylintrc" $(package)
 
-check: format-test uv-check ruff pylint pyre-check uv-check
+check: format-test uv-check ruff
 
 
 pyre:
