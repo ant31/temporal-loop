@@ -45,11 +45,11 @@ def main(  # pylint: disable=too-many-arguments
             help="temporalio namespace",
             show_default=True,
         ),
-    ] = "default",
+    ] = None,
     host: Annotated[
         str | None,
         typer.Option("--host", help="Address of the Temporal Frontend", show_default=True),
-    ] = "localhost:7233",
+    ] = None,
     queue: Annotated[
         str | None,
         typer.Option("--queue", "-q", help="Queue to listen on", show_default=True),
@@ -123,8 +123,8 @@ def main(  # pylint: disable=too-many-arguments
         _config = Config.model_validate(
             {
                 "temporalio": {
-                    "host": host,
-                    "namespace": namespace,
+                    "host": host or "localhost:7233",
+                    "namespace": namespace or "default",
                     "interceptors": interceptor or [],
                     "workers": [worker_config.model_dump()],
                 },

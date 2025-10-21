@@ -15,8 +15,8 @@ def load_config_with_overrides(config_path: Path, host: str | None, namespace: s
         The loaded and updated Config object.
     """
     config = Config.from_yaml(str(config_path))
-    if host:
+    if host is not None:
         config.temporalio.host = host
-    if namespace:
+    if namespace is not None:
         config.temporalio.namespace = namespace
     return config

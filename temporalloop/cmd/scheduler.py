@@ -52,7 +52,7 @@ def scheduler(  # pylint: disable=too-many-arguments
     namespace: Annotated[
         str | None,
         typer.Option("--namespace", "-n", help="temporalio namespace", show_default=True),
-    ] = "default",
+    ] = None,
 ) -> None:
     _config = load_config_with_overrides(config_path=config, host=host, namespace=namespace)
     _config.configure_logging()
