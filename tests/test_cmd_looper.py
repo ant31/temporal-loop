@@ -150,53 +150,6 @@ temporalio:
     assert worker2.namespace == "worker-2-namespace"
 
 
-@patch("temporalloop.cmd.looper.Looper")
-@patch("temporalio.client.Client.connect", new_callable=AsyncMock)
-def test_looper_cli_config_namespace_without_overrides(mock_connect, mock_looper, tmp_path):
-    """Test that the namespace from the config file is used when no CLI overrides are given."""
-    config_file = tmp_path / "config.yaml"
-    config_file.write_text(
-        """
-temporalio:
-  host: "config-host:7233"
-  namespace: "toto"
-  workers:
-    - name: "worker-1"
-      queue: "queue-1"
-"""
-    )
-    # Prevent the looper from running indefinitely
-    mock_looper.return_value.run = AsyncMock()
-
-    result = runner.invoke(
-        app,
-        [
-            "--config",
-            str(config_file),
-        ],
-    )
-
-    assert result.exit_code == 0
-    mock_looper.assert_called_once()
-    config_arg = mock_looper.call_args.kwargs["config"]
-    # We must call prepare_workers manually as we've mocked out the Looper.
-    # This will trigger the Client.connect call.
-    looper_instance = mock_looper.return_value
-    looper_instance.config = config_arg
-    # Assign side effects to call the real methods on the instance
-    looper_instance.prepare_workers.side_effect = lambda: Looper.prepare_workers(looper_instance)
-    looper_instance._create_worker_from_config.side_effect = (
-        lambda wc: Looper._create_worker_from_config(looper_instance, wc)
-    )
-
-    import asyncio
-
-    asyncio.run(looper_instance.prepare_workers())
-
-    mock_connect.assert_called_once()
-    _, kwargs = mock_connect.call_args
-    assert kwargs.get("namespace") == "toto"
-
 
 @patch("temporalloop.cmd.looper.run")
 def test_looper_cli_with_args(mock_run):

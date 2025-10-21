@@ -123,7 +123,7 @@ def main(  # pylint: disable=too-many-arguments
             {
                 "temporalio": {
                     "host": host or "localhost:7233",
-                    "namespace": namespace or "default",
+                    "namespace": namespace,
                     "interceptors": interceptor or [],
                     "workers": [worker_config.model_dump()],
                 },
