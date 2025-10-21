@@ -5,6 +5,7 @@ import functools
 import logging
 import signal
 import threading
+import yaml
 from collections.abc import Callable, Sequence
 from concurrent.futures import ThreadPoolExecutor
 from datetime import timedelta
@@ -151,6 +152,7 @@ class Looper:
     async def run(self):
         self.install_signal_handlers()
         self.config.configure_logging()
+        logger.info("Using configuration:\n%s", yaml.dump(self.config.model_dump()))
         logger.info("Connecting %s workers", len(self.config.temporalio.workers))
         self.workers = await self.prepare_workers()
         logger.info("Starting %s workers", len(self.config.temporalio.workers))
