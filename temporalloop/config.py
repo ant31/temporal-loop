@@ -110,9 +110,10 @@ class TemporalSettings(BaseModel):
 
     def inherit_worker_settings(self) -> "TemporalSettings":
         for worker in self.workers:
-            # Re-apply settings from the top level to each worker.
+            # Apply settings from the top level to each worker if not already set.
             # This ensures that CLI overrides are propagated correctly.
-            worker.host = self.host
+            if worker.host is None:
+                worker.host = self.host
             if worker.namespace is None:
                 worker.namespace = self.namespace
             if worker.factory is None:
