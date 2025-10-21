@@ -19,4 +19,9 @@ def load_config_with_overrides(config_path: Path, host: str | None, namespace: s
         config.temporalio.host = host
     if namespace is not None:
         config.temporalio.namespace = namespace
+
+    # Re-run the model validator to propagate the new host and namespace to workers
+    config.temporalio = config.temporalio.model_copy(
+        update={"host": config.temporalio.host, "namespace": config.temporalio.namespace}
+    )
     return config
