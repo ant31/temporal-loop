@@ -108,11 +108,11 @@ class TemporalSettings(BaseModel):
     enable_metrics: bool = False
     workers: list[WorkerSettings] = Field(default_factory=list)
 
-    @model_validator(mode="after")
     def inherit_worker_settings(self) -> "TemporalSettings":
         for worker in self.workers:
-            if worker.host is None:
-                worker.host = self.host
+            # Re-apply settings from the top level to each worker.
+            # This ensures that CLI overrides are propagated correctly.
+            worker.host = self.host
             if worker.namespace is None:
                 worker.namespace = self.namespace
             if worker.factory is None:

@@ -131,6 +131,7 @@ def main(  # pylint: disable=too-many-arguments
                 "logging": {"use_colors": use_colors, "level": log_level.value},
             }
         )
+        _config.temporalio.inherit_worker_settings()
     run(_config)
 
 
