@@ -5,13 +5,13 @@ import functools
 import logging
 import signal
 import threading
-import yaml
 from collections.abc import Callable, Sequence
 from concurrent.futures import ThreadPoolExecutor
 from datetime import timedelta
 from types import FrameType
 from typing import TYPE_CHECKING, Any, TypeVar
 
+import yaml
 from temporalio import workflow
 from temporalio.client import Client
 from temporalio.runtime import PrometheusConfig, Runtime, TelemetryConfig
