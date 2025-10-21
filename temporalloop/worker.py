@@ -96,11 +96,12 @@ class WorkerFactory:
         await self.execute_preinit(loaded_pre_init)
         logger.info(
             (
-                "[Start worker][%s][queue:%s][workflows:%s]"
+                "[Start worker][%s][namespace:%s][queue:%s][workflows:%s]"
                 "[activities:%s][max_concurrent_workflow_tasks:%s]"
                 "[max_concurrent_activities:%s][metric_bind_address:%s]"
             ),
             config.name,
+            config.namespace,
             config.queue,
             [w.__name__ for w in loaded_workflows],
             [a.__name__ for a in loaded_activities],
