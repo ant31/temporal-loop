@@ -3,6 +3,7 @@ from unittest.mock import AsyncMock, patch
 from typer.testing import CliRunner
 
 from temporalloop.cmd.looper import app
+from temporalloop.worker import Looper
 
 runner = CliRunner()
 
@@ -181,7 +182,7 @@ temporalio:
     # We must call prepare_workers manually as we've mocked out the Looper.
     # This will trigger the Client.connect call.
     looper_instance = mock_looper.return_value
-    looper_instance.prepare_workers.side_effect = looper_instance.__class__.prepare_workers
+    looper_instance.prepare_workers.side_effect = Looper.prepare_workers
     looper_instance.config = config_arg
 
     import asyncio
