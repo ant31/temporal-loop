@@ -116,6 +116,40 @@ temporalio:
 
 
 @patch("temporalloop.cmd.looper.run")
+def test_looper_cli_worker_namespace_inheritance(mock_run, tmp_path):
+    """Test worker-level namespace overrides from config without CLI interaction."""
+    config_file = tmp_path / "config.yaml"
+    config_file.write_text(
+        """
+temporalio:
+  host: "config-host:7233"
+  namespace: "global-namespace"
+  workers:
+    - name: "worker-1" # Inherits global namespace
+      queue: "queue-1"
+    - name: "worker-2" # Overrides namespace
+      queue: "queue-2"
+      namespace: "worker-2-namespace"
+"""
+    )
+    result = runner.invoke(
+        app,
+        [
+            "--config",
+            str(config_file),
+        ],
+    )
+    assert result.exit_code == 0
+    mock_run.assert_called_once()
+    config_arg = mock_run.call_args[0][0]
+    assert config_arg.temporalio.namespace == "global-namespace"
+    assert len(config_arg.temporalio.workers) == 2
+    worker1, worker2 = config_arg.temporalio.workers
+    assert worker1.namespace == "global-namespace"
+    assert worker2.namespace == "worker-2-namespace"
+
+
+@patch("temporalloop.cmd.looper.run")
 def test_looper_cli_with_args(mock_run):
     """Test the looper CLI with command-line arguments."""
     result = runner.invoke(
